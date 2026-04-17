@@ -1,6 +1,30 @@
 import asyncio
 import json
 import os
+from aiohttp import web
+import os
+
+# ... boshqa kodlar ...
+
+async def dummy_server():
+    """Render uchun soxta server - botga zarar qilmaydi"""
+    app = web.Application()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get('PORT', 8000))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌐 Server {port} portda ishga tushdi")
+
+async def main():
+    # Render uchun port ochamiz
+    asyncio.create_task(dummy_server())
+    
+    print("✅ Bot ishga tushdi!")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, WebAppInfo
