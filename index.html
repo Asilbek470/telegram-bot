@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To'lov</title>
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            background-color: #1c1c1e;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .summa-title { color: #8e8e93; font-size: 14px; margin-bottom: 5px; }
+        .summa { color: #34c759; font-size: 36px; font-weight: bold; margin: 0 0 20px 0; }
+        
+        .card {
+            background: linear-gradient(135deg, #007aff, #0055d4);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: left;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-type { color: white; font-weight: bold; font-size: 16px; font-style: italic; }
+        .chip { width: 30px; height: 20px; background: #ffcc00; border-radius: 4px; }
+        
+        .card-number { font-size: 22px; letter-spacing: 2px; font-weight: bold; margin-bottom: 15px; word-break: break-all; }
+        .card-owner { color: #e0e0e0; font-size: 14px; text-transform: uppercase; }
+        .card-label { color: #a0a0a0; font-size: 10px; margin-bottom: 2px; }
+
+        .timer-box {
+            background-color: #2c2c2e;
+            padding: 10px 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-bottom: 25px;
+        }
+        .timer-title { color: #8e8e93; font-size: 12px; }
+        .timer { color: #ffcc00; font-size: 24px; font-weight: bold; }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-copy { background-color: #34c759; color: white; }
+        .btn-confirm { background-color: #2c2c2e; color: white; border: 1px solid #48484a; }
+        
+        .icon { margin-right: 8px; }
+    </style>
+</head>
+<body>
+
+    <div class="summa-title">TO'LANISHI KERAK BO'LGAN SUMMA</div>
+    <div class="summa" id="price-display">Yuklanmoqda...</div>
+
+    <div class="card">
+        <div class="card-top">
+            <div class="chip"></div>
+            <div class="card-type">IPOTEKA - UZCARD</div>
+        </div>
+        <div class="card-number" id="card-number">8600 1234 5678 9012</div>
+        <div class="card-label">KARTA EGASI</div>
+        <div class="card-owner" id="card-owner">MAXMUDOV UMIDJON</div>
+    </div>
+
+    <div class="timer-box">
+        <div class="timer-title">TO'LOV UCHUN VAQT</div>
+        <div class="timer" id="timer">05:00</div>
+    </div>
+
+    <button class="btn btn-copy" onclick="copyCard()">
+        <span class="icon">📋</span> Kartani Nusxalash
+    </button>
+
+    <button class="btn btn-confirm" onclick="confirmPayment()">
+        To'lovni amalga oshirdim
+    </button>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // URL dan ma'lumotlarni olish
+        const urlParams = new URLSearchParams(window.location.search);
+        const price = urlParams.get('price');
+        const card = urlParams.get('card');
+        const owner = urlParams.get('owner');
+
+        if(price) document.getElementById('price-display').innerText = price + " so'm";
+        if(card) document.getElementById('card-number').innerText = card;
+        if(owner) document.getElementById('card-owner').innerText = owner;
+
+        // Taymer logikasi (5 daqiqa)
+        let time = 300; 
+        const timerEl = document.getElementById('timer');
+        
+        const countdown = setInterval(() => {
+            const minutes = Math.floor(time / 60);
+            let seconds = time % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            timerEl.innerHTML = `0${minutes}:${seconds}`;
+            time--;
+            if (time < 0) {
+                clearInterval(countdown);
+                timerEl.innerHTML = "00:00";
+                timerEl.style.color = "red";
+            }
+        }, 1000);
+
+        // Nusxalash funksiyasi
+        function copyCard() {
+            const cardNum = document.getElementById('card-number').innerText.replace(/\s/g, '');
+            navigator.clipboard.writeText(cardNum).then(() => {
+                tg.showAlert("Karta raqami nusxalandi!");
+            });
+        }
+
+        // To'lovni tasdiqlash
+        function confirmPayment() {
+            // Botga "paid" xabarini yuboramiz
+            tg.sendData("paid");
+        }
+    </script>
+</body>
+</html>
