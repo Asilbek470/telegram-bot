@@ -10,14 +10,14 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiohttp import web  # Render uchun kerak
+from aiohttp import web
 
 # ====== SOZLAMALAR ======
-BOT_TOKEN = "8767035251:AAE-uGLTGklkxir2hDfkw9DmekIGVw6cG9w"  # Tokeningiz
+BOT_TOKEN = "8767035251:AAE-uGLTGklkxir2hDfkw9DmekIGVw6cG9w"
 CHANNEL_ID = "@efootballtest"
 CARD_NUMBER = "8600 1234 5678 9012"
 CARD_OWNER = "MAXMUDOV UMIDJON"
-WEB_APP_URL = "https://reliable-frangipane-93eb9e.netlify.app"  # Oxirida / bo'lmasin
+WEB_APP_URL = "https://reliable-frangipane-93eb9e.netlify.app"
 
 ADMINS_LIST = [
     "@Sa1dov707",
@@ -236,7 +236,7 @@ async def no_comment(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("❌ Iltimos, izoh yozing. Bu maydon majburiy:")
     await callback.answer()
 
-# ====== AKKOUNT TURI TANLASH (Olish uchun) ======
+# ====== AKKOUNT TURI TANLASH ======
 @dp.callback_query(F.data.in_(["acc_clean", "acc_linked"]))
 async def account_type_selected(callback: CallbackQuery, state: FSMContext):
     gc_type = "Toza" if callback.data == "acc_clean" else "Ulangan"
@@ -245,7 +245,7 @@ async def account_type_selected(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✏️ Qo'shimcha izoh yozing (majburiy):")
     await callback.answer()
 
-# ====== TASDIQLASH XABARINI YUBORISH ======
+# ====== TASDIQLASH ======
 async def send_confirmation(message_obj, state, comment_text):
     data = await state.get_data()
     user_id = message_obj.from_user.id
@@ -351,7 +351,7 @@ async def get_photo(message: Message, state: FSMContext):
     await message.delete()
     await message.answer("📱 Akkountga Google yoki Game Center ulanganmi?", reply_markup=yes_no_kb("google"))
 
-# ====== GOOGLE/GC (Sotish uchun) ======
+# ====== GOOGLE/GC ======
 @dp.callback_query(F.data.in_(["google_yes", "google_no"]))
 async def google_answer(callback: CallbackQuery, state: FSMContext):
     val = "Ulangan" if callback.data == "google_yes" else "Toza"
@@ -390,6 +390,7 @@ async def sell_or_obmen_handler(callback: CallbackQuery, state: FSMContext):
 async def get_price(message: Message, state: FSMContext):
     data = await state.get_data()
     ad_type = data.get("ad_type")
+    
     text = message.text.replace(",", "").replace(".", "").replace(" ", "")
     try:
         price = parse_price(text)
@@ -541,7 +542,6 @@ async def dummy_server():
 
 # ====== ASOSIY FUNKSIYA ======
 async def main():
-    # Render uchun portni ochish
     asyncio.create_task(dummy_server())
     print("✅ Bot ishga tushdi!")
     await dp.start_polling(bot)
