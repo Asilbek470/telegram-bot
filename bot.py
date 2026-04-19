@@ -1,30 +1,6 @@
 import asyncio
 import json
 import os
-from aiohttp import web
-import os
-
-# ... boshqa kodlar ...
-
-async def dummy_server():
-    """Render uchun soxta server - botga zarar qilmaydi"""
-    app = web.Application()
-    runner = web.AppRunner(app)
-    await runner.setup()
-    port = int(os.environ.get('PORT', 8000))
-    site = web.TCPSite(runner, '0.0.0.0', port)
-    await site.start()
-    print(f"🌐 Server {port} portda ishga tushdi")
-
-async def main():
-    # Render uchun port ochamiz
-    asyncio.create_task(dummy_server())
-    
-    print("✅ Bot ishga tushdi!")
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
 from datetime import datetime
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, CallbackQuery, WebAppInfo
@@ -34,13 +10,14 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiohttp import web  # Render uchun kerak
 
 # ====== SOZLAMALAR ======
-BOT_TOKEN = "8767035251:AAE-uGLTGklkxir2hDfkw9DmekIGVw6cG9w"  # BU YERGA TOKEN QO'YING
+BOT_TOKEN = "8767035251:AAE-uGLTGklkxir2hDfkw9DmekIGVw6cG9w"  # Tokeningiz
 CHANNEL_ID = "@efootballtest"
 CARD_NUMBER = "8600 1234 5678 9012"
 CARD_OWNER = "MAXMUDOV UMIDJON"
-WEB_APP_URL = "https://reliable-frangipane-93eb9e.netlify.app/"
+WEB_APP_URL = "https://reliable-frangipane-93eb9e.netlify.app"  # Oxirida / bo'lmasin
 
 ADMINS_LIST = [
     "@Sa1dov707",
@@ -53,13 +30,17 @@ ADMINS_LIST = [
     "@saidabrolov_s"
 ]
 
-EXAMPLE_PHOTO_SELL = "AgACAgIAAxkBAAICh2nifDr7zJi-e5VBZ1OPKZx2sSgrAAKYEmsb8DUJS5BsObvReK_mAQADAgADeQADOwQ"
-EXAMPLE_PHOTO_BUY = "AgACAgIAAxkBAAICjmnifjkb8L2Ng9e2RobCUPxG4xsUAAK2FWsbavQJSw-8Fj2iT9MkAQADAgADeQADOwQ"
+# Sotish eloni uchun rasm
+EXAMPLE_PHOTO_SELL = "AgACAgIAAxkBAAEonOlp4MoFRh0bBAKZ7E1HaQABb16Nq_QAAskbaxtqGfFKc7oXSC0fq_oBAAMCAAN5AAM7BA"
+# Olish eloni uchun rasm
+EXAMPLE_PHOTO_BUY = "AgACAgIAAxkBAAEong9p4PObmPjqyp7TnYU7SZi8M3lRHgACeBZrG2r0CUu4frb_WpwAAbIBAAMCAAN5AAM7BA"
+
 DB_FILE = "users_ads.json"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
+# ====== HOLATLAR ======
 class AdStates(StatesGroup):
     choosing_type = State()
     sending_photo = State()
@@ -71,6 +52,7 @@ class AdStates(StatesGroup):
     adding_comment = State()
     confirming = State()
 
+# ====== MA'LUMOTLAR BAZASI ======
 def load_db():
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -89,6 +71,7 @@ def save_user_ad(user_id, ad_data):
     db[uid].append(ad_data)
     save_db(db)
 
+# ====== NARX HISOBLASH ======
 def parse_price(text):
     text = text.replace(",", "").replace(".", "").replace(" ", "")
     price_raw = int(text)
@@ -107,6 +90,7 @@ def calc_fee(price):
     else:
         return 10000
 
+# ====== KLAVIATURALAR ======
 main_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="📝 ELON BERISH"), KeyboardButton(text="📂 ELONLARIM")],
     [KeyboardButton(text="👮 ADMINLAR"), KeyboardButton(text="📜 QOIDALAR")],
@@ -162,11 +146,13 @@ def admins_kb():
         buttons.append(row)
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
+# ====== START ======
 @dp.message(Command("start"))
 async def start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("🎮 UZPES SALE BOT ga xush kelibsiz!\n\neFootball akkountlarini xavfsiz sotib olish va sotish platformasi.", reply_markup=main_menu)
 
+# ====== ASOSIY MENYU ======
 @dp.message(F.text == "📝 ELON BERISH")
 async def elon_berish(message: Message, state: FSMContext):
     await state.clear()
@@ -202,6 +188,7 @@ async def elonlarim(message: Message):
     kb.inline_keyboard.append([InlineKeyboardButton(text="⬅️ Orqaga", callback_data="cancel")])
     await message.answer("📂 <b>Sizning e'lonlaringiz:</b>\n\nQuyidagilardan birini tanlang:", reply_markup=kb, parse_mode="HTML")
 
+# ====== ELONNI KO'RISH ======
 @dp.callback_query(F.data.startswith("view_ad_"))
 async def view_ad(callback: CallbackQuery, state: FSMContext):
     idx = int(callback.data.split("_")[-1])
@@ -232,12 +219,14 @@ async def view_ad(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(meta_text, reply_markup=view_kb, parse_mode="HTML")
     await callback.answer()
 
+# ====== BEKOR QILISH ======
 @dp.callback_query(F.data == "cancel")
 async def cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.answer("❌ Jarayon bekor qilindi.", reply_markup=main_menu)
     await callback.answer()
 
+# ====== IZOHIM YO'Q ======
 @dp.callback_query(F.data == "no_comment")
 async def no_comment(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -247,6 +236,7 @@ async def no_comment(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("❌ Iltimos, izoh yozing. Bu maydon majburiy:")
     await callback.answer()
 
+# ====== AKKOUNT TURI TANLASH (Olish uchun) ======
 @dp.callback_query(F.data.in_(["acc_clean", "acc_linked"]))
 async def account_type_selected(callback: CallbackQuery, state: FSMContext):
     gc_type = "Toza" if callback.data == "acc_clean" else "Ulangan"
@@ -255,6 +245,7 @@ async def account_type_selected(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✏️ Qo'shimcha izoh yozing (majburiy):")
     await callback.answer()
 
+# ====== TASDIQLASH XABARINI YUBORISH ======
 async def send_confirmation(message_obj, state, comment_text):
     data = await state.get_data()
     user_id = message_obj.from_user.id
@@ -266,8 +257,10 @@ async def send_confirmation(message_obj, state, comment_text):
     ad_type = data.get("ad_type", "SOTISH")
     is_obmen_only = data.get("is_obmen_only", False)
     photo_id = data.get("photo_id")
+
     admins_formatted = "\n".join([f"▪️ {admin}" for admin in ADMINS_LIST])
     hashtags = []
+    
     if ad_type == "SOTISH":
         if not is_obmen_only:
             hashtags.append("#SOTILADI")
@@ -277,13 +270,41 @@ async def send_confirmation(message_obj, state, comment_text):
     else:
         hashtags.append("#OLINADI")
         hashtags.append("#GOOGLE_GAMECENTER" if gc_text == "Ulangan" else "#TOZA")
+    
     hashtags_str = " ".join(hashtags)
+    
     if ad_type == "SOTISH":
-        caption = f"{hashtags_str}\n\n💰 <b>Narx:</b> {price_text}\n🔄 <b>Obmen:</b> {obmen_text}\n📱 <b>Google & Game Center:</b> {gc_text}\n👤 <b>Murojaat:</b> {username}\n\n📋 <b>Qo'shimcha ma'lumot:</b>\n{comment_text}\n\n━━━━━━━━━━━━━━━━━━━━\n🔄 <b>OLDI SOTDI GARANT ADMINLAR</b>\n{admins_formatted}\n\n🤖 <b>ELON BERISH UCHUN BOTIMIZ</b>\n@uzpes_sale_bot"
+        caption = (
+            f"{hashtags_str}\n\n"
+            f"💰 <b>Narx:</b> {price_text}\n"
+            f"🔄 <b>Obmen:</b> {obmen_text}\n"
+            f"📱 <b>Google & Game Center:</b> {gc_text}\n"
+            f"👤 <b>Murojaat:</b> {username}\n\n"
+            f"📋 <b>Qo'shimcha ma'lumot:</b>\n"
+            f"{comment_text}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔄 <b>OLDI SOTDI GARANT ADMINLAR</b>\n"
+            f"{admins_formatted}\n\n"
+            f"🤖 <b>ELON BERISH UCHUN BOTIMIZ</b>\n"
+            f"@uzpes_sale_bot"
+        )
     else:
-        caption = f"{hashtags_str}\n\n💰 <b>Byudjet:</b> {price_text}\n👤 <b>Murojaat:</b> {username}\n\n📋 <b>Qo'shimcha ma'lumot:</b>\n{comment_text}\n\n━━━━━━━━━━━━━━━━━━━━\n🔄 <b>OLDI SOTDI GARANT ADMINLAR</b>\n{admins_formatted}\n\n🤖 <b>ELON BERISH UCHUN BOTIMIZ</b>\n@uzpes_sale_bot"
+        caption = (
+            f"{hashtags_str}\n\n"
+            f"💰 <b>Byudjet:</b> {price_text}\n"
+            f"👤 <b>Murojaat:</b> {username}\n\n"
+            f"📋 <b>Qo'shimcha ma'lumot:</b>\n"
+            f"{comment_text}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔄 <b>OLDI SOTDI GARANT ADMINLAR</b>\n"
+            f"{admins_formatted}\n\n"
+            f"🤖 <b>ELON BERISH UCHUN BOTIMIZ</b>\n"
+            f"@uzpes_sale_bot"
+        )
+
     await state.update_data(caption=caption, username=username, comment=comment_text)
     await state.set_state(AdStates.confirming)
+    
     try:
         if ad_type == "SOTISH" and photo_id:
             await message_obj.answer_photo(photo=photo_id, caption=caption, parse_mode="HTML")
@@ -294,12 +315,21 @@ async def send_confirmation(message_obj, state, comment_text):
     except Exception as e:
         print(f"Post preview xatolik: {e}")
         await message_obj.answer(caption, parse_mode="HTML")
-    await message_obj.answer("✅ <b>Elon kanalga yuborish uchun tayyor!</b>\n\n💰 Xizmat haqi: {} so'm\n💳 Quyidagi tugma orqali to'lov qiling va tasdiqlang.".format(fee_val), reply_markup=payment_kb(), parse_mode="HTML")
+    
+    await message_obj.answer(
+        "✅ <b>Elon kanalga yuborish uchun tayyor!</b>\n\n"
+        f"💰 Xizmat haqi: {fee_val} so'm\n"
+        "💳 Quyidagi tugma orqali to'lov qiling va tasdiqlang.",
+        reply_markup=payment_kb(),
+        parse_mode="HTML"
+    )
 
+# ====== TUR TANLASH ======
 @dp.callback_query(F.data.in_(["type_sell", "type_buy"]))
 async def choose_type(callback: CallbackQuery, state: FSMContext):
     ad_type = "SOTISH" if callback.data == "type_sell" else "OLISH"
     await state.update_data(ad_type=ad_type)
+
     if ad_type == "SOTISH":
         await state.set_state(AdStates.sending_photo)
         if EXAMPLE_PHOTO_SELL:
@@ -312,6 +342,7 @@ async def choose_type(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("💰 Qancha narxgacha akkount qidiryapsiz?")
     await callback.answer()
 
+# ====== RASM ======
 @dp.message(AdStates.sending_photo, F.photo)
 async def get_photo(message: Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
@@ -320,6 +351,7 @@ async def get_photo(message: Message, state: FSMContext):
     await message.delete()
     await message.answer("📱 Akkountga Google yoki Game Center ulanganmi?", reply_markup=yes_no_kb("google"))
 
+# ====== GOOGLE/GC (Sotish uchun) ======
 @dp.callback_query(F.data.in_(["google_yes", "google_no"]))
 async def google_answer(callback: CallbackQuery, state: FSMContext):
     val = "Ulangan" if callback.data == "google_yes" else "Toza"
@@ -328,6 +360,7 @@ async def google_answer(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("🔄 Obmen ko'rasizmi?", reply_markup=yes_no_kb("obmen"))
     await callback.answer()
 
+# ====== OBMEN ======
 @dp.callback_query(F.data.in_(["obmen_yes", "obmen_no"]))
 async def obmen_answer(callback: CallbackQuery, state: FSMContext):
     val = "Bor" if callback.data == "obmen_yes" else "Yoq"
@@ -336,18 +369,23 @@ async def obmen_answer(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("💡 Akkount sotiladimi yoki faqat obmen uchunmi?", reply_markup=sell_obmen_kb())
     await callback.answer()
 
+# ====== SOTISH YOKI OBMEN ======
 @dp.callback_query(F.data.in_(["action_price", "action_obmen"]))
 async def sell_or_obmen_handler(callback: CallbackQuery, state: FSMContext):
     if callback.data == "action_obmen":
         await state.update_data(price_text="Obmen", fee=5000, is_obmen_only=True)
         await state.set_state(AdStates.adding_comment)
-        await callback.message.edit_text("✏️ Qo'shimcha izoh yozing (ixtiyoriy):\nAgar izohingiz bo'lmasa, \"Izohim yo'q\" tugmasini bosing yoki - yuboring.", reply_markup=comment_kb())
+        await callback.message.edit_text(
+            "✏️ Qo'shimcha izoh yozing (ixtiyoriy):\nAgar izohingiz bo'lmasa, \"Izohim yo'q\" tugmasini bosing yoki - yuboring.",
+            reply_markup=comment_kb()
+        )
     else:
         await state.update_data(is_obmen_only=False)
         await state.set_state(AdStates.entering_price)
         await callback.message.edit_text("💰 Akkount narxini yuboring.")
     await callback.answer()
 
+# ====== NARX ======
 @dp.message(AdStates.entering_price)
 async def get_price(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -358,23 +396,30 @@ async def get_price(message: Message, state: FSMContext):
         if price < 10000:
             await message.answer("❌ Narx juda kam! Qayta kiriting:")
             return
+        
         await message.delete()
         fee = calc_fee(price)
         price_formatted = format_price(price)
         await state.update_data(price_text=price_formatted, fee=fee, price_int=price)
+        
         if ad_type == "OLISH":
             await state.set_state(AdStates.buying_account_type)
             await message.answer("📱 Qanday akkount qidiryapsiz?", reply_markup=account_type_kb())
         else:
             await state.set_state(AdStates.adding_comment)
-            await message.answer("✏️ Qo'shimcha izoh yozing (ixtiyoriy):\nAgar izohingiz bo'lmasa, \"Izohim yo'q\" tugmasini bosing yoki - yuboring.", reply_markup=comment_kb())
+            await message.answer(
+                "✏️ Qo'shimcha izoh yozing (ixtiyoriy):\nAgar izohingiz bo'lmasa, \"Izohim yo'q\" tugmasini bosing yoki - yuboring.",
+                reply_markup=comment_kb()
+            )
     except ValueError:
         await message.answer("❌ Faqat raqam kiriting!")
 
+# ====== IZOH ======
 @dp.message(AdStates.adding_comment)
 async def get_comment(message: Message, state: FSMContext):
     data = await state.get_data()
     ad_type = data.get("ad_type")
+    
     if ad_type == "OLISH":
         if message.text == "-" or message.text.lower() == "izohim yo'q":
             await message.answer("❌ Iltimos, izoh yozing. Bu maydon majburiy:")
@@ -382,6 +427,7 @@ async def get_comment(message: Message, state: FSMContext):
         comment = message.text
     else:
         comment = "Yo'q" if message.text == "-" or message.text.lower() == "izohim yo'q" else message.text
+        
     await message.delete()
     await send_confirmation(message, state, comment)
 
@@ -390,10 +436,10 @@ async def get_comment(message: Message, state: FSMContext):
 async def show_card(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     fee_val = data.get("fee", 5000)
+    
     clean_card = CARD_NUMBER.replace(" ", "")
     app_url = f"{WEB_APP_URL}?price={fee_val}&card={clean_card}&owner={CARD_OWNER}"
     
-    # Web App tugmasi
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="💳 To'lovni amalga oshirish", web_app=WebAppInfo(url=app_url))]
     ])
@@ -406,6 +452,7 @@ async def show_card(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
+# ====== WEB APP DAN KELGAN JAVOB ======
 @dp.message(F.web_app_data)
 async def web_app_payment(message: Message, state: FSMContext):
     if message.web_app_data.data == "paid":
@@ -414,13 +461,16 @@ async def web_app_payment(message: Message, state: FSMContext):
             caption = data.get("caption", "Elon")
             photo_id = data.get("photo_id")
             ad_type = data.get("ad_type", "SOTISH")
+            
             if ad_type == "OLISH":
                 sent_msg = await bot.send_photo(CHANNEL_ID, photo=EXAMPLE_PHOTO_BUY, caption=caption, parse_mode="HTML") if EXAMPLE_PHOTO_BUY else await bot.send_message(CHANNEL_ID, caption, parse_mode="HTML")
             elif photo_id:
                 sent_msg = await bot.send_photo(CHANNEL_ID, photo=photo_id, caption=caption, parse_mode="HTML")
             else:
                 sent_msg = await bot.send_message(CHANNEL_ID, caption, parse_mode="HTML")
+                
             msg_id = sent_msg.message_id
+
             save_user_ad(message.from_user.id, {
                 "type": ad_type,
                 "price": data.get("price_text", "Noma'lum"),
@@ -430,11 +480,17 @@ async def web_app_payment(message: Message, state: FSMContext):
                 "channel_msg_id": msg_id,
                 "caption": caption
             })
-            await message.answer("✅ <b>To'lov tasdiqlandi!</b>\nElon kanalga joylandi!\n\n📢 Kanalimiz: " + CHANNEL_ID, reply_markup=main_menu, parse_mode="HTML")
+
+            await message.answer(
+                "✅ <b>To'lov tasdiqlandi!</b>\nElon kanalga joylandi!\n\n📢 Kanalimiz: " + CHANNEL_ID,
+                reply_markup=main_menu,
+                parse_mode="HTML"
+            )
         except Exception as e:
             await message.answer(f"❌ Xatolik: {str(e)}")
         await state.clear()
 
+# ====== TO'LOV TASDIQLASH (Zaxira) ======
 @dp.callback_query(F.data == "paid")
 async def payment_done(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -442,13 +498,16 @@ async def payment_done(callback: CallbackQuery, state: FSMContext):
         caption = data.get("caption", "Elon")
         photo_id = data.get("photo_id")
         ad_type = data.get("ad_type", "SOTISH")
+        
         if ad_type == "OLISH":
             sent_msg = await bot.send_photo(CHANNEL_ID, photo=EXAMPLE_PHOTO_BUY, caption=caption, parse_mode="HTML") if EXAMPLE_PHOTO_BUY else await bot.send_message(CHANNEL_ID, caption, parse_mode="HTML")
         elif photo_id:
             sent_msg = await bot.send_photo(CHANNEL_ID, photo=photo_id, caption=caption, parse_mode="HTML")
         else:
             sent_msg = await bot.send_message(CHANNEL_ID, caption, parse_mode="HTML")
+            
         msg_id = sent_msg.message_id
+
         save_user_ad(callback.from_user.id, {
             "type": ad_type,
             "price": data.get("price_text", "Noma'lum"),
@@ -458,15 +517,35 @@ async def payment_done(callback: CallbackQuery, state: FSMContext):
             "channel_msg_id": msg_id,
             "caption": caption
         })
-        await callback.message.answer("✅ <b>To'lov tasdiqlandi!</b>\nElon kanalga joylandi!\n\n📢 Kanalimiz: " + CHANNEL_ID, reply_markup=main_menu, parse_mode="HTML")
+
+        await callback.message.answer(
+            "✅ <b>To'lov tasdiqlandi!</b>\nElon kanalga joylandi!\n\n📢 Kanalimiz: " + CHANNEL_ID,
+            reply_markup=main_menu,
+            parse_mode="HTML"
+        )
     except Exception as e:
         await callback.message.answer(f"❌ Xatolik: {str(e)}")
+
     await state.clear()
     await callback.answer()
 
+# ====== RENDER UCHUN SOXTA SERVER ======
+async def dummy_server():
+    app = web.Application()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    port = int(os.environ.get('PORT', 8000))
+    site = web.TCPSite(runner, '0.0.0.0', port)
+    await site.start()
+    print(f"🌐 Server {port} portda ishga tushdi")
+
+# ====== ASOSIY FUNKSIYA ======
 async def main():
+    # Render uchun portni ochish
+    asyncio.create_task(dummy_server())
     print("✅ Bot ishga tushdi!")
     await dp.start_polling(bot)
 
+# Bu qator to'g'ri yozilgan
 if __name__ == "__main__":
     asyncio.run(main())
