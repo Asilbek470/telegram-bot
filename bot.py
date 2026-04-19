@@ -30,17 +30,13 @@ ADMINS_LIST = [
     "@saidabrolov_s"
 ]
 
-# Sotish eloni uchun rasm
 EXAMPLE_PHOTO_SELL = "AgACAgIAAxkBAAEonOlp4MoFRh0bBAKZ7E1HaQABb16Nq_QAAskbaxtqGfFKc7oXSC0fq_oBAAMCAAN5AAM7BA"
-# Olish eloni uchun rasm
 EXAMPLE_PHOTO_BUY = "AgACAgIAAxkBAAEong9p4PObmPjqyp7TnYU7SZi8M3lRHgACeBZrG2r0CUu4frb_WpwAAbIBAAMCAAN5AAM7BA"
-
 DB_FILE = "users_ads.json"
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
-# ====== HOLATLAR ======
 class AdStates(StatesGroup):
     choosing_type = State()
     sending_photo = State()
@@ -52,7 +48,6 @@ class AdStates(StatesGroup):
     adding_comment = State()
     confirming = State()
 
-# ====== MA'LUMOTLAR BAZASI ======
 def load_db():
     if os.path.exists(DB_FILE):
         with open(DB_FILE, "r", encoding="utf-8") as f:
@@ -71,7 +66,6 @@ def save_user_ad(user_id, ad_data):
     db[uid].append(ad_data)
     save_db(db)
 
-# ====== NARX HISOBLASH ======
 def parse_price(text):
     text = text.replace(",", "").replace(".", "").replace(" ", "")
     price_raw = int(text)
@@ -90,7 +84,6 @@ def calc_fee(price):
     else:
         return 10000
 
-# ====== KLAVIATURALAR ======
 main_menu = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text="📝 ELON BERISH"), KeyboardButton(text="📂 ELONLARIM")],
     [KeyboardButton(text="👮 ADMINLAR"), KeyboardButton(text="📜 QOIDALAR")],
@@ -146,13 +139,11 @@ def admins_kb():
         buttons.append(row)
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-# ====== START ======
 @dp.message(Command("start"))
 async def start(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("🎮 UZPES SALE BOT ga xush kelibsiz!\n\neFootball akkountlarini xavfsiz sotib olish va sotish platformasi.", reply_markup=main_menu)
 
-# ====== ASOSIY MENYU ======
 @dp.message(F.text == "📝 ELON BERISH")
 async def elon_berish(message: Message, state: FSMContext):
     await state.clear()
@@ -169,7 +160,14 @@ async def qoidalar(message: Message):
 
 @dp.message(F.text == "💰 ELON NARXI")
 async def elon_narxi(message: Message):
-    await message.answer("💰 <b>Akkauntlarga e'lon berish narxlari:</b>\n\n<code>0 dan 1 999 000 gacha — 5 000 so'm</code>\n<code>2 000 000 dan yuqori — 10 000 so'm</code>\n\n♻️ <i>Botda avto tolov qilish imkoniyati mavjud!</i>\n\n❗ <i>Akkount olaman deb reklama berishingiz ham mumkin!</i>", parse_mode="HTML")
+    await message.answer(
+        "💰 <b>Akkauntlarga e'lon berish narxlari:</b>\n\n"
+        "<code>0 dan 1 999 000 gacha — 5 000 so'm</code>\n"
+        "<code>2 000 000 dan yuqori — 10 000 so'm</code>\n\n"
+        "♻️ <i>Botda avto tolov qilish imkoniyati mavjud!</i>\n\n"
+        "❗ <i>Akkount olaman deb reklama berishingiz ham mumkin!</i>",
+        parse_mode="HTML"
+    )
 
 @dp.message(F.text == "📂 ELONLARIM")
 async def elonlarim(message: Message):
@@ -188,7 +186,6 @@ async def elonlarim(message: Message):
     kb.inline_keyboard.append([InlineKeyboardButton(text="⬅️ Orqaga", callback_data="cancel")])
     await message.answer("📂 <b>Sizning e'lonlaringiz:</b>\n\nQuyidagilardan birini tanlang:", reply_markup=kb, parse_mode="HTML")
 
-# ====== ELONNI KO'RISH ======
 @dp.callback_query(F.data.startswith("view_ad_"))
 async def view_ad(callback: CallbackQuery, state: FSMContext):
     idx = int(callback.data.split("_")[-1])
@@ -219,14 +216,12 @@ async def view_ad(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(meta_text, reply_markup=view_kb, parse_mode="HTML")
     await callback.answer()
 
-# ====== BEKOR QILISH ======
 @dp.callback_query(F.data == "cancel")
 async def cancel(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.message.answer("❌ Jarayon bekor qilindi.", reply_markup=main_menu)
     await callback.answer()
 
-# ====== IZOHIM YO'Q ======
 @dp.callback_query(F.data == "no_comment")
 async def no_comment(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -236,7 +231,6 @@ async def no_comment(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("❌ Iltimos, izoh yozing. Bu maydon majburiy:")
     await callback.answer()
 
-# ====== AKKOUNT TURI TANLASH ======
 @dp.callback_query(F.data.in_(["acc_clean", "acc_linked"]))
 async def account_type_selected(callback: CallbackQuery, state: FSMContext):
     gc_type = "Toza" if callback.data == "acc_clean" else "Ulangan"
@@ -245,7 +239,6 @@ async def account_type_selected(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("✏️ Qo'shimcha izoh yozing (majburiy):")
     await callback.answer()
 
-# ====== TASDIQLASH ======
 async def send_confirmation(message_obj, state, comment_text):
     data = await state.get_data()
     user_id = message_obj.from_user.id
@@ -324,7 +317,6 @@ async def send_confirmation(message_obj, state, comment_text):
         parse_mode="HTML"
     )
 
-# ====== TUR TANLASH ======
 @dp.callback_query(F.data.in_(["type_sell", "type_buy"]))
 async def choose_type(callback: CallbackQuery, state: FSMContext):
     ad_type = "SOTISH" if callback.data == "type_sell" else "OLISH"
@@ -342,7 +334,6 @@ async def choose_type(callback: CallbackQuery, state: FSMContext):
         await callback.message.answer("💰 Qancha narxgacha akkount qidiryapsiz?")
     await callback.answer()
 
-# ====== RASM ======
 @dp.message(AdStates.sending_photo, F.photo)
 async def get_photo(message: Message, state: FSMContext):
     photo_id = message.photo[-1].file_id
@@ -351,7 +342,6 @@ async def get_photo(message: Message, state: FSMContext):
     await message.delete()
     await message.answer("📱 Akkountga Google yoki Game Center ulanganmi?", reply_markup=yes_no_kb("google"))
 
-# ====== GOOGLE/GC ======
 @dp.callback_query(F.data.in_(["google_yes", "google_no"]))
 async def google_answer(callback: CallbackQuery, state: FSMContext):
     val = "Ulangan" if callback.data == "google_yes" else "Toza"
@@ -360,7 +350,6 @@ async def google_answer(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("🔄 Obmen ko'rasizmi?", reply_markup=yes_no_kb("obmen"))
     await callback.answer()
 
-# ====== OBMEN ======
 @dp.callback_query(F.data.in_(["obmen_yes", "obmen_no"]))
 async def obmen_answer(callback: CallbackQuery, state: FSMContext):
     val = "Bor" if callback.data == "obmen_yes" else "Yoq"
@@ -369,7 +358,6 @@ async def obmen_answer(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text("💡 Akkount sotiladimi yoki faqat obmen uchunmi?", reply_markup=sell_obmen_kb())
     await callback.answer()
 
-# ====== SOTISH YOKI OBMEN ======
 @dp.callback_query(F.data.in_(["action_price", "action_obmen"]))
 async def sell_or_obmen_handler(callback: CallbackQuery, state: FSMContext):
     if callback.data == "action_obmen":
@@ -385,7 +373,6 @@ async def sell_or_obmen_handler(callback: CallbackQuery, state: FSMContext):
         await callback.message.edit_text("💰 Akkount narxini yuboring.")
     await callback.answer()
 
-# ====== NARX ======
 @dp.message(AdStates.entering_price)
 async def get_price(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -415,7 +402,6 @@ async def get_price(message: Message, state: FSMContext):
     except ValueError:
         await message.answer("❌ Faqat raqam kiriting!")
 
-# ====== IZOH ======
 @dp.message(AdStates.adding_comment)
 async def get_comment(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -432,7 +418,6 @@ async def get_comment(message: Message, state: FSMContext):
     await message.delete()
     await send_confirmation(message, state, comment)
 
-# ====== WEB APP BILAN TO'LOV ======
 @dp.callback_query(F.data == "show_card")
 async def show_card(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -453,7 +438,6 @@ async def show_card(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
-# ====== WEB APP DAN KELGAN JAVOB ======
 @dp.message(F.web_app_data)
 async def web_app_payment(message: Message, state: FSMContext):
     if message.web_app_data.data == "paid":
@@ -491,7 +475,6 @@ async def web_app_payment(message: Message, state: FSMContext):
             await message.answer(f"❌ Xatolik: {str(e)}")
         await state.clear()
 
-# ====== TO'LOV TASDIQLASH (Zaxira) ======
 @dp.callback_query(F.data == "paid")
 async def payment_done(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -530,7 +513,6 @@ async def payment_done(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     await callback.answer()
 
-# ====== RENDER UCHUN SOXTA SERVER ======
 async def dummy_server():
     app = web.Application()
     runner = web.AppRunner(app)
@@ -540,12 +522,10 @@ async def dummy_server():
     await site.start()
     print(f"🌐 Server {port} portda ishga tushdi")
 
-# ====== ASOSIY FUNKSIYA ======
 async def main():
     asyncio.create_task(dummy_server())
     print("✅ Bot ishga tushdi!")
     await dp.start_polling(bot)
 
-# Bu qator to'g'ri yozilgan
 if __name__ == "__main__":
     asyncio.run(main())
